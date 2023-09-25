@@ -1,14 +1,14 @@
-# Matrix Manipulation Packages/Libraries
+# (Packages/Libraries) Matrix Manipulation
 import pandas as pd 
 
-# Statistical Analysis & Machine Learning Packages/Libraries 
+# (Packages/Libraries) Statistical Analysis & Machine Learning
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_selection import SelectKBest, chi2, f_classif, RFE
 from sklearn.tree import DecisionTreeClassifier
 from scipy.stats import pearsonr
 
-# Miscellaneous Packages/Libraries 
+# (Packages/Libraries) Miscellaneous
 import argparse
 import warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -113,7 +113,8 @@ class FeatureSelection:
         return selected_attributes
     
 def main():
-    print("IntelliGenes Feature Selection...")
+    print("\n")
+    print("IntelliGenes Feature Selection/Biomarker Location...")
     
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--cgit_file', required = True)

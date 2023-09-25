@@ -20,7 +20,9 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 import argparse
+import warnings
 
+warnings.filterwarnings("ignore", message = "No data for colormapping provided via 'c'. Parameters 'vmin', 'vmax' will be ignored")
 
 class DiseasePrediction:
     
@@ -100,7 +102,7 @@ class DiseasePrediction:
                 rf_hhi = ((np.abs(rf_importances_normalized) / np.sum(rf_importances_normalized))**2)
                 
             if self.use_visualization:
-               shap.summary_plot(rf_importances, self.X_test, plot_type = "bar")
+               shap.summary_plot(rf_importances[0], self.X_test, plot_type = "dot", show = False)
                
                plt.title("Random Forest Feature Importances", fontsize = 16)
                plt.xlabel("SHAP Value", fontsize = 14)
@@ -114,6 +116,7 @@ class DiseasePrediction:
                    os.makedirs(self.output_dir)
                    
                plt.savefig(rf_plot)
+               plt.close()
                
             y_pred = rf_clf.predict(self.X_test)
             y_proba = rf_clf.predict_proba(self.X_test)[:, 1]
@@ -158,7 +161,7 @@ class DiseasePrediction:
                 svm_hhi = ((np.abs(svm_importances_normalized) / np.sum(svm_importances_normalized))**2)
                 
             if self.use_visualization:
-                shap.summary_plot(svm_importances, self.X_test, plot_type = "bar")
+                shap.summary_plot(svm_importances, self.X_test, plot_type = "dot", show = False)
                 
                 plt.title("Support Vector Machine Feature Importances", fontsize = 16)
                 plt.xlabel("SHAP Value", fontsize = 14)
@@ -172,6 +175,7 @@ class DiseasePrediction:
                    os.makedirs(self.output_dir)
                    
                 plt.savefig(svm_plot)
+                plt.close()
             
             y_pred = svm_clf.predict(self.X_test)
             y_proba = svm_clf.predict_proba(self.X_test)[:, 1]
@@ -189,8 +193,8 @@ class DiseasePrediction:
     
     # XGBoost Classifier 
     def xgb_classifier(self: 'DiseasePrediction'):
-        print('XGBoost...')
         if self.use_xgb: 
+            print('XGBoost...')
             if self.use_normalization:
                 pipeline = Pipeline([('scaling', StandardScaler()), ('xgb_clf', xgb.XGBClassifier(random_state = self.random_state, objective = "reg:squarederror"))])
             else:
@@ -217,7 +221,7 @@ class DiseasePrediction:
                 xgb_hhi = ((np.abs(xgb_importances_normalized) / np.sum(xgb_importances_normalized))**2)
                 
             if self.use_visualization:
-                shap.summary_plot(xgb_importances, self.X_test, plot_type = "bar")
+                shap.summary_plot(xgb_importances, self.X_test, plot_type = "dot", show = False)
                 
                 plt.title("XGBoost Feature Importances", fontsize = 16)
                 plt.xlabel("SHAP Value", fontsize = 14)
@@ -231,6 +235,7 @@ class DiseasePrediction:
                     os.makedirs(self.output_dir)
                 
                 plt.savefig(xgb_plot)
+                plt.close()
                 
             y_pred = xgb_clf.predict(self.X_test)
             y_proba = xgb_clf.predict_proba(self.X_test)[:, 1]
@@ -248,8 +253,8 @@ class DiseasePrediction:
     
     # k-Nearest Neighbors Classifier
     def knn_classifier(self: 'DiseasePrediction'):
-        print('k-Nearest Neighbors...')
         if self.use_knn: 
+            print('k-Nearest Neighbors...')
             if self.use_normalization:
                 pipeline = Pipeline([('scaling', StandardScaler()), ('knn_clf', sklearn.neighbors.KNeighborsClassifier())])
             else:
@@ -275,7 +280,7 @@ class DiseasePrediction:
                 knn_hhi = ((np.abs(knn_importances_normalized) / np.sum(knn_importances_normalized))**2)
             
             if self.use_visualization:
-                shap.summary_plot(knn_importances, self.X_test, plot_type = "bar")
+                shap.summary_plot(knn_importances, self.X_test, plot_type = "dot", show = False)
                 
                 plt.title("k-Nearest Neighbors Feature Importances", fontsize = 16)
                 plt.xlabel("SHAP Value", fontsize = 14)
@@ -289,6 +294,7 @@ class DiseasePrediction:
                     os.makedirs(self.output_dir)
                     
                 plt.savefig(knn_plot)
+                plt.close()
             
             y_pred = knn_clf.predict(self.X_test)
             y_proba = knn_clf.predict_proba(self.X_test)[:, 1]
@@ -306,8 +312,8 @@ class DiseasePrediction:
     
     # Multi-Layer Perceptron Classifier
     def mlp_classifier(self: 'DiseasePrediction'):
-        print('Multi-Layer Perceptron...')
         if self.use_mlp:
+            print('Multi-Layer Perceptron...')
             if self.use_normalization:
                 pipeline = Pipeline([('scaling', StandardScaler()), ('mlp_clf', MLPClassifier(random_state = self.random_state, max_iter = 3000))])
             else:
@@ -337,7 +343,7 @@ class DiseasePrediction:
                 mlp_hhi = ((np.abs(mlp_importances_normalized) / np.sum(mlp_importances_normalized))**2)
                 
             if self.use_visualization:
-                shap.summary_plot(mlp_importances, self.X_test, plot_type = "bar")
+                shap.summary_plot(mlp_importances, self.X_test, plot_type = "dot", show = False)
                 
                 plt.title("Multi-Layer Perceptron Feature Importances", fontsize = 16)
                 plt.xlabel("SHAP Value", fontsize = 14)
@@ -351,6 +357,7 @@ class DiseasePrediction:
                     os.makedirs(self.output_dir)
                     
                 plt.savefig(mlp_plot)
+                plt.close()
                 
             y_pred = mlp_clf.predict(self.X_test)
             y_proba = mlp_clf.predict_proba(self.X_test)[:, 1]
@@ -368,9 +375,9 @@ class DiseasePrediction:
     
     # Voting Classifier
     def voting_classifier(self: 'DiseasePrediction'):
-        print('Voting Classifier...')
         if self.classifiers:
-            voting_clf = VotingClassifier(estimators = [(clf[0], clf[1][0]) for clf in self.classifiers], voting = self.voting).fit(self.X_train, self.y_train)
+            print('Voting Classifier...')
+            voting_clf = VotingClassifier(estimators = [(clf[0], clf[1]["Classifier"]) for clf in self.classifiers], voting = self.voting).fit(self.X_train, self.y_train)
             
             y_pred = voting_clf.predict(self.X_test)
             y_proba = voting_clf.predict_proba(self.X_test)[:, 1]
@@ -384,7 +391,7 @@ class DiseasePrediction:
         return None
     
     # Execute Classifiers
-    def execute_classifiers(self):
+    def execute_classifiers(self: 'DiseasePrediction'):
         classifiers = [
             ("Random Forest", self.rf_classifier),
             ("Support Vector Machine", self.svm_classifier),
@@ -411,9 +418,19 @@ class DiseasePrediction:
                     classifier_info["HHI"] = rest[1]
 
                 self.classifiers.append((name, classifier_info))
+                
+        voting_metrics_tuple = self.voting_classifier()
+        if voting_metrics_tuple:
+            voting_clf, voting_accuracy, voting_roc_auc, voting_f1 = voting_metrics_tuple
+            self.classifiers.append(("Voting Classifier", {
+                "Classifier": voting_clf,
+                "Accuracy": voting_accuracy,
+                "ROC-AUC": voting_roc_auc,
+                "F1": voting_f1
+            }))
             
     # Generate Classifier Metrics
-    def classifier_metrics(self):   
+    def classifier_metrics(self: 'DiseasePrediction'):   
         if hasattr(self, 'classifiers') and self.classifiers:
             metrics_df = pd.DataFrame({
                 'Classifier': [clf[0] for clf in self.classifiers],
@@ -424,7 +441,18 @@ class DiseasePrediction:
         
             return metrics_df
     
-    # Generate I-Genes Score
+    # Generate I-Genes Profile
+    def expression_direction(self: 'DiseasePrediction', *scores):
+        positive_count = sum(1 for score in scores if score > 0)
+        negative_count = sum(1 for score in scores if score < 0)
+        
+        if positive_count > negative_count:
+            return "Overexpressed"
+        elif negative_count > positive_count:
+            return "Underexpressed"
+        else:
+            return "Inconclusive"
+    
     def igenes_scores(self: 'DiseasePrediction'):
         if self.use_igenes:
             print('Generating I-Genes Scores...')
@@ -433,8 +461,12 @@ class DiseasePrediction:
                 herfindahl_hirschman_indices = []
                 
                 for name, metrics in self.classifiers:
-                    normalized_importances.append(metrics["Importances"])
-                    herfindahl_hirschman_indices.append(metrics["HHI"])
+                    if name == "Voting Classifier":
+                        continue
+                    
+                    if "Importances" in metrics:
+                        normalized_importances.append(metrics["Importances"])
+                        herfindahl_hirschman_indices.append(metrics["HHI"])
                     
                 if not normalized_importances or not herfindahl_hirschman_indices:
                     return
@@ -452,6 +484,14 @@ class DiseasePrediction:
                     'Feature': self.X_train.columns,
                     'I-Genes Score': igenes_scores,
                 })
+                
+                normalized_importances_list = [metrics["Importances"] for _, metrics in self.classifiers if "Importances" in metrics]
+                transposed_importances_list = list(zip(*normalized_importances_list))
+                directions = [self.expression_direction(*scores) for scores in transposed_importances_list]
+                igenes_df['Direction'] = directions
+                
+                igenes_df['I-Genes Rankings'] = igenes_df['I-Genes Score'].rank(ascending=False).astype(int)
+                igenes_df = igenes_df.sort_values(by = 'I-Genes Rankings')
                 
                 return igenes_df
     
