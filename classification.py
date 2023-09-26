@@ -63,6 +63,8 @@ class DiseasePrediction:
 
         self.df = pd.read_csv(self.cgit_file)
         self.features = pd.read_csv(self.features_file)['Features'].values.flatten().tolist()
+        if not self.features or self.features[0] == "Features":
+            raise ValueError("Features not included.")
         
         self.y = self.df['Type']
         self.X = self.df[self.features]
