@@ -27,7 +27,7 @@ setup(
     install_requires = [
         'pandas',
         'numpy',
-        'scikit-learn',
+        'sklearn',
         'xgboost',
         'shap',
         'matplotlib',
