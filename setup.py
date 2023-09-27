@@ -36,9 +36,9 @@ setup(
     python_requires = '>=3.6',
     entry_points = {
         'console_scripts': [
-            'igenes_predict=classification:main',
-            'igenes_select=selection:main',
-            'igenes=classification:main',
+            'igenes_predict=intelligenes.classification:main',
+            'igenes_select=intelligenes.selection:main',
+            'igenes=intelligenes.intelligenes:main',
         ]
     },
     include_package_data  = True,
