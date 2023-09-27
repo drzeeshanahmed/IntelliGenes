@@ -6,7 +6,7 @@ class CustomInstall(install):
     def run(self):
         print("Installing IntelliGenes...")
         install.run(self)
-        print("Installed IntelliGens!")
+        print("Installed IntelliGenes!")
 
 setup(
     name = 'IntelliGenes',
