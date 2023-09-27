@@ -1,3 +1,3 @@
-import intelligenes
-import selection
-import classification
+from . import intelligenes
+from . import selection
+from . import classification
