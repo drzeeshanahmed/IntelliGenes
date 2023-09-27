@@ -42,7 +42,7 @@ class FeatureSelection:
 
     def rfe_selector(self: 'FeatureSelection'):
         if self.use_rfe:
-            print("Recurseive Feature Elimination...") 
+            print("Recursive Feature Elimination...") 
             rfe_selection = RFE(estimator = DecisionTreeClassifier(random_state = self.random_state), n_features_to_select = 1).fit(self.X_train, self.y_train)
             rfe_df = pd.DataFrame({'attributes': self.X_train.columns,
                                    'rfe_rankings': rfe_selection.ranking_})
