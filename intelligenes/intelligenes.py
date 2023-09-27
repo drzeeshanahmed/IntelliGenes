@@ -1,5 +1,6 @@
 import argparse
 import subprocess
+import pkg_resources
 
 def main():
     parser = argparse.ArgumentParser()
@@ -28,8 +29,9 @@ def main():
     
     args = parser.parse_args()
 
+    selection_path = pkg_resources.resource_filename('intelligenes', 'selection.py')
     selection_args = [
-        'python', 'selection.py',
+        'python', selection_path,
         '-i', args.cgit_file,
         '-o', args.output_dir,
         '--random_state', str(args.random_state),
@@ -55,8 +57,9 @@ def main():
             features_file = line.split(":")[1].strip()
             break
 
+    classification_path = pkg_resources.resource_filename('intelligenes', 'classification.py')
     classification_args = [
-        'python', 'classification.py',
+        'python', classification_path,
         '-i', args.cgit_file,
         '-f',features_file,
         '-o', args.output_dir,
