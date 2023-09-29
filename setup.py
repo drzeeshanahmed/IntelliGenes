@@ -9,7 +9,7 @@ class CustomInstall(install):
         print("Installed IntelliGenes!")
 
 setup(
-    name = 'IntelliGenes',
+    name = 'intelligenes',
     version = '1.0',
     author = 'William DeGroat',
     author_email = 'will.degroat@rutgers.edu',
