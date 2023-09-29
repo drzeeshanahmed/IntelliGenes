@@ -1,5 +1,12 @@
 # IntelliGenes
 
+This Python-based, portable pipeline addresses challenges arising from the cascading volume of genomics datasets being created
+that require interpretation. IntelliGenes serves as a comprehensive toolkit, fitting cutting-edge algorithms for
+discovering disease-associated biomarkers and patient prediction to users’ unique cohorts. IntelliGenes integrates
+demographics with genomics, facilitating investigations that consider both variables simultaneously. With
+IntelliGenes, we introduce I-Genes Scores, our novel metric for understanding the relevance of biomarkers in disease
+prediction engines
+
 _IntelliGenes_ can be installed through our GitHub using the terminal. Follow the provided steps to install IntelliGenes and the package’s dependencies: 
 ```
 # Clone IntelliGenes’ GitHub Repository
