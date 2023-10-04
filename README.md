@@ -23,7 +23,7 @@ igenes_select -i /data/cgit_file.csv -o results/
 igenes_predict -i /data/cgit_file.csv -f features_file.csv -o results/
 
 # IntelliGenes (Discovering Biomarkers & Predicting Disease) 
-igenes -I /data/cgit_file.csv -o results/
+igenes -i /data/cgit_file.csv -o results/
 ```
 
 These commands all users to write various flags that will tailor _IntelliGenes_ to their exact needs: 
