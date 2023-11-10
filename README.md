@@ -29,10 +29,10 @@ igenes -i /data/cgit_file.csv -o results/
 These commands all users to write various flags that will tailor _IntelliGenes_ to their exact needs: 
 ```
 # IntelliGenes Selection Help
-Igenes_select --help
+igenes_select --help
 
 # IntelliGenes Prediction Help
-Igenes_predict --help
+igenes_predict --help
 
 # IntelliGenes Help
 igenes --help
