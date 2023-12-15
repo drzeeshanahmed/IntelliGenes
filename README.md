@@ -44,3 +44,8 @@ _IntelliGenes_ requires a CGIT formatted dataset as an input. Examples of CGIT d
   -	There must be a ‘Type’ column, denoting a patient’s status as an integer (use 0 or 1). 
 
 More information is available in **Supplementary Material 2: _IntelliGenes_: Installation, Requirements, and User’s Guide**
+
+Cite
+```
+William DeGroat, Dinesh Mendhe, Atharva Bhusari, Habiba Abdelhalim, Saman Zeeshan, Zeeshan Ahmed, IntelliGenes: A novel machine learning pipeline for biomarker discovery and predictive analysis using multi-genomic profiles, Bioinformatics, 2023;, btad755, https://doi.org/10.1093/bioinformatics/btad755
+```
