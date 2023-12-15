@@ -43,7 +43,7 @@ _IntelliGenes_ requires a CGIT formatted dataset as an input. Examples of CGIT d
   -	Demographics such as ‘Age’, ‘Race’, and ‘Sex’ should be integers (use EHR standards). These demographics are not required, as IntelliGenes works using only genomics/transcriptomics.
   -	There must be a ‘Type’ column, denoting a patient’s status as an integer (use 0 or 1). 
 
-More information is available in **Supplementary Material 2: _IntelliGenes_: Installation, Requirements, and User’s Guide**
+More information is available in **Supplementary Material 2: _IntelliGenes_: Installation, configuration, and user’s guidelines**
 
 Cite: 
 
