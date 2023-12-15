@@ -92,6 +92,7 @@ class DiseasePrediction:
                 }
                 
                 rf_clf = GridSearchCV(pipeline, param_grid = rf_parameters, cv = self.kfold, scoring = 'accuracy', n_jobs = -1, verbose = 0).fit(self.X_train, self.y_train)
+                rf_clf = rf_clf.best_estimator_
             else: 
                 rf_clf = pipeline.fit(self.X_train, self.y_train)
                 
@@ -151,6 +152,7 @@ class DiseasePrediction:
                 }
                 
                 svm_clf = GridSearchCV(pipeline, param_grid = svm_parameters, cv = self.kfold, scoring = 'accuracy', n_jobs = -1, verbose = 0).fit(self.X_train, self.y_train)
+                svm_clf = svm_clf.best_estimator_
             else: 
                 svm_clf = pipeline.fit(self.X_train, self.y_train)
                 
@@ -211,6 +213,7 @@ class DiseasePrediction:
                 }
                 
                 xgb_clf = GridSearchCV(pipeline, param_grid = xgb_parameters, cv = self.kfold, scoring = 'accuracy', n_jobs = -1, verbose = 0).fit(self.X_train, self.y_train)
+                xgb_clf = xgb_clf.best_estimator_
             else: 
                 xgb_clf = pipeline.fit(self.X_train, self.y_train)
                 
@@ -270,6 +273,7 @@ class DiseasePrediction:
                 }
                 
                 knn_clf = GridSearchCV(pipeline, param_grid = knn_parameters, cv = self.kfold, scoring = 'accuracy', n_jobs = -1, verbose = 0).fit(self.X_train, self.y_train)
+                knn_clf = knn_clf.best_estimator_
             else:
                 knn_clf = pipeline.fit(self.X_train, self.y_train)
                 
@@ -333,6 +337,7 @@ class DiseasePrediction:
                 }
                 
                 mlp_clf = GridSearchCV(pipeline, param_grid = mlp_parameters, cv = self.kfold, scoring = 'accuracy', n_jobs = -1, verbose = 0).fit(self.X_train, self.y_train)
+                mlp_clf = mlp_clf.best_estimator_
             else:
                 mlp_clf = pipeline.fit(self.X_train, self.y_train)
                 
