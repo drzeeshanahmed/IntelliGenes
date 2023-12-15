@@ -47,7 +47,5 @@ More information is available in **Supplementary Material 2: _IntelliGenes_: Ins
 
 Cite
 ```
-William DeGroat, Dinesh Mendhe, Atharva Bhusari, Habiba Abdelhalim, Saman Zeeshan, Zeeshan Ahmed,
-IntelliGenes: A novel machine learning pipeline for biomarker discovery and predictive analysis using multi-genomic profiles,
-Bioinformatics, 2023;, btad755, https://doi.org/10.1093/bioinformatics/btad755
+DeGroat, W. et al. intelligenes: A novel machine learning pipeline for Biomarker discovery and predictive analysis using multi-genomic profiles. Bioinformatics (2023). doi:10.1093/bioinformatics/btad755 
 ```
