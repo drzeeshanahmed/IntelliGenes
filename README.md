@@ -46,8 +46,6 @@ _IntelliGenes_ requires a CGIT formatted dataset as an input. Examples of CGIT d
 More information is available in **Supplementary Material 2: _IntelliGenes_: Installation, Requirements, and User’s Guide**
 
 Cite:
-```
-DeGroat, W. et al.
-intelligenes: A novel machine learning pipeline for Biomarker discovery and predictive analysis using multi-genomic profiles.
-Bioinformatics (2023). doi:10.1093/bioinformatics/btad755 
-```
+
+DeGroat, W. et al. intelligenes: A novel machine learning pipeline for Biomarker discovery and predictive analysis using multi-genomic profiles. Bioinformatics (2023). doi:10.1093/bioinformatics/btad755 
+
