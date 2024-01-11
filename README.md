@@ -47,4 +47,4 @@ More information is available in **Supplementary Material 2: _IntelliGenes_: Ins
 
 If using _IntelliGenes_, please cite: 
 
-DeGroat, W. et al. intelligenes: A novel machine learning pipeline for Biomarker discovery and predictive analysis using multi-genomic profiles. Bioinformatics (2023). doi:10.1093/bioinformatics/btad755 
+Degroat, W., Mendhe, D., Bhurasi, A., Abdelhalim, H., Saman, Z., & Ahmed, Z. (2023). IntelliGenes: A novel machine learning pipeline for biomarker discovery and predictive analysis using multi-genomic profiles. Bioinformatics. 39, 12. btad755. PMID: 38096588. doi:10.1093/bioinformatics/btad755 (Oxford).
