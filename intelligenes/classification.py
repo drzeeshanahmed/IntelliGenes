@@ -21,6 +21,7 @@ import os
 from datetime import datetime
 import argparse
 import warnings
+from pathlib import Path
 
 warnings.filterwarnings("ignore", message = "No data for colormapping provided via 'c'. Parameters 'vmin', 'vmax' will be ignored")
 
@@ -44,7 +45,12 @@ class DiseasePrediction:
                                             use_igenes = True,
                                             use_visualization = False):
         
-        self.cgit_file = cgit_file
+        # The cgit_file should only be the file name (not the full path). This is because, when writing the output
+        # csv to a file, if the file path contains slashes, it is treated as sub directories (which is not correct)
+        # since we only care about naming the specific file
+        self.cgit_file = Path(cgit_file).stem
+        self.df = pd.read_csv(cgit_file) ## NOTE: changed to use full path instead of file name
+
         self.features_file = features_file
         self.output_dir = output_dir
         self.voting = voting
@@ -61,7 +67,7 @@ class DiseasePrediction:
         self.use_igenes = use_igenes
         self. use_visualization = use_visualization
 
-        self.df = pd.read_csv(self.cgit_file)
+        
         self.features = pd.read_csv(self.features_file)['Features'].values.flatten().tolist()
         if not self.features or self.features[0] == "Features":
             raise ValueError("Features not included.")
@@ -561,14 +567,16 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     
-    metrics_name = f"{args.cgit_file}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_Classifier-Metrics.csv"
+    # Important to use just file name rather than entire path, since a full path with directories will not work
+    file_name = Path(args.cgit_file).stem
+    metrics_name = f"{file_name}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_Classifier-Metrics.csv"
     metrics_file = os.path.join(args.output_dir, metrics_name)
     
     metrics_df.to_csv(metrics_file, index = False)
     print("\n Clasifier Metrics:", metrics_file, "\n")
     
     if args.no_igenes is False: 
-        igenes_name = f"{args.cgit_file}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_I-Genes-Score.csv"
+        igenes_name = f"{file_name}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_I-Genes-Score.csv"
         igenes_file = os.path.join(args.output_dir, igenes_name)
         
         igenes_df.to_csv(igenes_file, index = False)
