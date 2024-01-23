@@ -1,5 +1,4 @@
 # (Packages/Libraries) Matrix Manipulation
-from pathlib import Path
 import pandas as pd 
 
 # (Packages/Libraries) Statistical Analysis & Machine Learning
@@ -15,6 +14,7 @@ import warnings
 from sklearn.exceptions import ConvergenceWarning
 import os
 from datetime import datetime
+from pathlib import Path
 
 class FeatureSelection:
     
@@ -146,10 +146,7 @@ def main():
     
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-    
-    # Important to use file_name rather than the full path, since having directories in the path name
-    # will change the location of the features_file. I.e if cgit_file is foo/bar.csv and output_dir is baz/
-    # then this will attempt to save to baz/foo/bar.csv rather than a file called "foo/bar.csv" under baz/
+
     file_name = Path(args.cgit_file).stem
     features_name = f"{file_name}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_Selected-Features.csv"
     features_file = os.path.join(args.output_dir, features_name)
