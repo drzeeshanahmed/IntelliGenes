@@ -45,12 +45,9 @@ class DiseasePrediction:
                                             use_igenes = True,
                                             use_visualization = False):
         
-        # The cgit_file should only be the file name (not the full path). This is because, when writing the output
-        # csv to a file, if the file path contains slashes, it is treated as sub directories (which is not correct)
-        # since we only care about naming the specific file
-        self.cgit_file = Path(cgit_file).stem
-        self.df = pd.read_csv(cgit_file) ## NOTE: changed to use full path instead of file name
 
+        self.cgit_file = Path(cgit_file).stem
+        self.df = pd.read_csv(cgit_file)
         self.features_file = features_file
         self.output_dir = output_dir
         self.voting = voting
@@ -66,7 +63,6 @@ class DiseasePrediction:
         self.use_normalization = use_normalization
         self.use_igenes = use_igenes
         self. use_visualization = use_visualization
-
         
         self.features = pd.read_csv(self.features_file)['Features'].values.flatten().tolist()
         if not self.features or self.features[0] == "Features":
@@ -103,17 +99,12 @@ class DiseasePrediction:
                 rf_clf = pipeline.fit(self.X_train, self.y_train)
                 
             if self.use_igenes or self.use_visualization:
-                # https://stackoverflow.com/questions/61004438/shap-value-dimensions-are-different-for-randomforest-and-xgb-why-how-is-there-s
-                # Tree Explainer for RF returns a 3D matrix with dimensions (labels x samples x features).
-                # The second entry (index 1), gives us the SHAP values for the case label. This will be a 2D matrix
-                # of size samples x features, and so calculating the mean below over axis = 0 will get us an
-                # average of importances over all samples.
                 rf_importances = shap.TreeExplainer(rf_clf.named_steps['rf_clf']).shap_values(self.X_test)[1]
             
             if self.use_igenes:
                 rf_importances_extracted = np.mean(rf_importances, axis = 0)
-                rf_importances_normalized = rf_importances_extracted / np.max(np.abs(rf_importances_extracted))
-                rf_hhi = ((np.abs(rf_importances_normalized) / np.sum(rf_importances_normalized))**2)
+                rf_importances_normalized = (np.abs(rf_importances_extracted) / np.sum(np.abs(rf_importances_extracted))) * 100
+                rf_hhi = np.sum(np.square(rf_importances_normalized))
                 
             if self.use_visualization:
                shap.summary_plot(rf_importances, self.X_test, plot_type = "dot", show = False)
@@ -140,7 +131,7 @@ class DiseasePrediction:
             rf_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return rf_clf, rf_accuracy, rf_roc_auc, rf_f1, rf_importances_normalized, rf_hhi
+                return rf_clf, rf_accuracy, rf_roc_auc, rf_f1, rf_importances_extracted / np.max(np.abs(rf_importances_extracted)), rf_hhi
             else:
                 return rf_clf, rf_accuracy, rf_roc_auc, rf_f1                  
         
@@ -171,11 +162,9 @@ class DiseasePrediction:
                 svm_importances = shap.LinearExplainer(svm_clf.named_steps['svm_clf'], masker = shap.maskers.Independent(self.X_train)).shap_values(self.X_test)
             
             if self.use_igenes:
-                # Unlike RF, the other four classifiers treat binary classification as a single label (predicting case -> 1).
-                # Therefore, the `svm_importances` result will be a singular 2D matrix of dimension samples x features.
                 svm_importances_extracted = np.mean(svm_importances, axis = 0)
-                svm_importances_normalized = svm_importances_extracted / np.max(np.abs(svm_importances_extracted))
-                svm_hhi = ((np.abs(svm_importances_normalized) / np.sum(svm_importances_normalized))**2)
+                svm_importances_normalized = (np.abs(svm_importances_extracted) / np.sum(np.abs(svm_importances_extracted))) * 100
+                svm_hhi = np.sum(np.square(svm_importances_normalized))
                 
             if self.use_visualization:
                 shap.summary_plot(svm_importances, self.X_test, plot_type = "dot", show = False)
@@ -202,7 +191,7 @@ class DiseasePrediction:
             svm_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return svm_clf, svm_accuracy, svm_roc_auc, svm_f1, svm_importances_normalized, svm_hhi
+                return svm_clf, svm_accuracy, svm_roc_auc, svm_f1, svm_importances_extracted / np.max(np.abs(svm_importances_extracted)), svm_hhi
             else: 
                 return svm_clf, svm_accuracy, svm_roc_auc
             
@@ -234,10 +223,9 @@ class DiseasePrediction:
                 xgb_importances = shap.TreeExplainer(xgb_clf.named_steps['xgb_clf']).shap_values(self.X_test)
             
             if self.use_igenes:
-                # see SVM
                 xgb_importances_extracted = np.mean(xgb_importances, axis = 0)
-                xgb_importances_normalized = xgb_importances_extracted / np.max(np.abs(xgb_importances_extracted))
-                xgb_hhi = ((np.abs(xgb_importances_normalized) / np.sum(xgb_importances_normalized))**2)
+                xgb_importances_normalized = (np.abs(xgb_importances_extracted) / np.sum(np.abs(xgb_importances_extracted))) * 100
+                xgb_hhi = np.sum(np.square(xgb_importances_normalized))
                 
             if self.use_visualization:
                 shap.summary_plot(xgb_importances, self.X_test, plot_type = "dot", show = False)
@@ -264,7 +252,7 @@ class DiseasePrediction:
             xgb_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return xgb_clf, xgb_accuracy, xgb_roc_auc, xgb_f1, xgb_importances_normalized, xgb_hhi
+                return xgb_clf, xgb_accuracy, xgb_roc_auc, xgb_f1, xgb_importances_extracted / np.max(np.abs(xgb_importances_extracted)), xgb_hhi
             else: 
                 return xgb_clf, xgb_accuracy, xgb_roc_auc, xgb_f1
             
@@ -295,10 +283,9 @@ class DiseasePrediction:
                 knn_importances = shap.KernelExplainer(knn_clf.named_steps['knn_clf'].predict, shap.sample(self.X_train, 1000)).shap_values(self.X_test)
             
             if self.use_igenes:
-                # See SVM
                 knn_importances_extracted = np.mean(knn_importances, axis = 0)
-                knn_importances_normalized = knn_importances_extracted / np.max(np.abs(knn_importances_extracted))
-                knn_hhi = ((np.abs(knn_importances_normalized) / np.sum(knn_importances_normalized))**2)
+                knn_importances_normalized = (np.abs(knn_importances_extracted) / np.sum(np.abs(knn_importances_extracted))) * 100
+                knn_hhi = np.sum(np.square(knn_importances_normalized))
             
             if self.use_visualization:
                 shap.summary_plot(knn_importances, self.X_test, plot_type = "dot", show = False)
@@ -325,7 +312,7 @@ class DiseasePrediction:
             knn_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return knn_clf, knn_accuracy, knn_roc_auc, knn_f1, knn_importances_normalized, knn_hhi
+                return knn_clf, knn_accuracy, knn_roc_auc, knn_f1, knn_importances_extracted / np.max(np.abs(knn_importances_extracted)), knn_hhi
             else: 
                 return knn_clf, knn_accuracy, knn_roc_auc, knn_f1
             
@@ -360,10 +347,9 @@ class DiseasePrediction:
                 mlp_importances =  shap.KernelExplainer(mlp_clf.named_steps['mlp_clf'].predict, shap.sample(self.X_train, 1000)).shap_values(self.X_test)
                 
             if self.use_igenes:
-                # See SVM
                 mlp_importances_extracted = np.mean(mlp_importances, axis = 0)
-                mlp_importances_normalized = mlp_importances_extracted / np.max(np.abs(mlp_importances_extracted))
-                mlp_hhi = ((np.abs(mlp_importances_normalized) / np.sum(mlp_importances_normalized))**2)
+                mlp_importances_normalized = (np.abs(mlp_importances_extracted) / np.sum(np.abs(mlp_importances_extracted))) * 100
+                mlp_hhi = np.sum(np.square(mlp_importances_normalized))
                 
             if self.use_visualization:
                 shap.summary_plot(mlp_importances, self.X_test, plot_type = "dot", show = False)
@@ -390,7 +376,7 @@ class DiseasePrediction:
             mlp_f1 = f1_score(self.y_test, y_pred, average = 'weighted')           
             
             if self.use_igenes:
-                return mlp_clf, mlp_accuracy, mlp_roc_auc, mlp_f1, mlp_importances_normalized, mlp_hhi
+                return mlp_clf, mlp_accuracy, mlp_roc_auc, mlp_f1, mlp_importances_extracted / np.max(np.abs(mlp_importances_extracted)), mlp_hhi
             else:
                 return mlp_clf, mlp_accuracy, mlp_roc_auc, mlp_f1
             
@@ -482,40 +468,40 @@ class DiseasePrediction:
             if self.classifiers:
                 normalized_importances = []
                 herfindahl_hirschman_indices = []
-                
+
                 for name, metrics in self.classifiers:
                     if name == "Voting Classifier":
                         continue
-                    
+
                     if "Importances" in metrics:
                         normalized_importances.append(metrics["Importances"])
                         herfindahl_hirschman_indices.append(metrics["HHI"])
-                    
+
                 if not normalized_importances or not herfindahl_hirschman_indices:
                     return
-                    
+
                 num_classifiers = len(self.classifiers)
                 hhi_weights = (np.array(herfindahl_hirschman_indices) / np.sum(herfindahl_hirschman_indices))
-                initial_weights = (1 / (num_classifiers + 1))
+                initial_weights = (1 / (num_classifiers))
                 final_weights = (initial_weights + (initial_weights * hhi_weights))
-                
+                                
                 igenes_scores = np.zeros_like(normalized_importances[0])
                 for weight, importance in zip(final_weights, normalized_importances):
                     igenes_scores += weight * np.abs(importance)
-                                
+                
                 igenes_df = pd.DataFrame({
                     'Feature': self.X_train.columns,
                     'I-Genes Score': igenes_scores,
                 })
-                
+
                 normalized_importances_list = [metrics["Importances"] for _, metrics in self.classifiers if "Importances" in metrics]
                 transposed_importances_list = list(zip(*normalized_importances_list))
-                directions = [self.expression_direction(*scores) for scores in transposed_importances_list]
-                igenes_df['Direction'] = directions
-                
+                                
+                igenes_df['Expression Direction'] = [self.SHAP_directions(*scores) for scores in transposed_importances_list]
+
                 igenes_df['I-Genes Rankings'] = igenes_df['I-Genes Score'].rank(ascending=False).astype(int)
-                igenes_df = igenes_df.sort_values(by = 'I-Genes Rankings')
-                
+                igenes_df = igenes_df.sort_values(by='I-Genes Rankings')
+
                 return igenes_df
     
 # Execute DiseasePrediction Class
@@ -539,7 +525,6 @@ def main():
     parser.add_argument('--normalize', action = 'store_true')
     parser.add_argument('--no_igenes', action = 'store_true')
     parser.add_argument('--no_visualizations', action = 'store_true')
-
 
     args = parser.parse_args()
 
@@ -567,7 +552,6 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     
-    # Important to use just file name rather than entire path, since a full path with directories will not work
     file_name = Path(args.cgit_file).stem
     metrics_name = f"{file_name}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_Classifier-Metrics.csv"
     metrics_file = os.path.join(args.output_dir, metrics_name)
