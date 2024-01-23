@@ -97,15 +97,20 @@ class DiseasePrediction:
                 rf_clf = pipeline.fit(self.X_train, self.y_train)
                 
             if self.use_igenes or self.use_visualization:
-                rf_importances = shap.TreeExplainer(rf_clf.named_steps['rf_clf']).shap_values(self.X_test)
+                # https://stackoverflow.com/questions/61004438/shap-value-dimensions-are-different-for-randomforest-and-xgb-why-how-is-there-s
+                # Tree Explainer for RF returns a 3D matrix with dimensions (labels x samples x features).
+                # The second entry (index 1), gives us the SHAP values for the case label. This will be a 2D matrix
+                # of size samples x features, and so calculating the mean below over axis = 0 will get us an
+                # average of importances over all samples.
+                rf_importances = shap.TreeExplainer(rf_clf.named_steps['rf_clf']).shap_values(self.X_test)[1]
             
             if self.use_igenes:
-                rf_importances_extracted = np.mean(rf_importances[0], axis = 0)
+                rf_importances_extracted = np.mean(rf_importances, axis = 0)
                 rf_importances_normalized = rf_importances_extracted / np.max(np.abs(rf_importances_extracted))
                 rf_hhi = ((np.abs(rf_importances_normalized) / np.sum(rf_importances_normalized))**2)
                 
             if self.use_visualization:
-               shap.summary_plot(rf_importances[0], self.X_test, plot_type = "dot", show = False)
+               shap.summary_plot(rf_importances, self.X_test, plot_type = "dot", show = False)
                
                plt.title("Random Forest Feature Importances", fontsize = 16)
                plt.xlabel("SHAP Value", fontsize = 14)
@@ -160,7 +165,9 @@ class DiseasePrediction:
                 svm_importances = shap.LinearExplainer(svm_clf.named_steps['svm_clf'], masker = shap.maskers.Independent(self.X_train)).shap_values(self.X_test)
             
             if self.use_igenes:
-                svm_importances_extracted = svm_importances[0]
+                # Unlike RF, the other four classifiers treat binary classification as a single label (predicting case -> 1).
+                # Therefore, the `svm_importances` result will be a singular 2D matrix of dimension samples x features.
+                svm_importances_extracted = np.mean(svm_importances, axis = 0)
                 svm_importances_normalized = svm_importances_extracted / np.max(np.abs(svm_importances_extracted))
                 svm_hhi = ((np.abs(svm_importances_normalized) / np.sum(svm_importances_normalized))**2)
                 
@@ -221,7 +228,8 @@ class DiseasePrediction:
                 xgb_importances = shap.TreeExplainer(xgb_clf.named_steps['xgb_clf']).shap_values(self.X_test)
             
             if self.use_igenes:
-                xgb_importances_extracted = xgb_importances[0]
+                # see SVM
+                xgb_importances_extracted = np.mean(xgb_importances, axis = 0)
                 xgb_importances_normalized = xgb_importances_extracted / np.max(np.abs(xgb_importances_extracted))
                 xgb_hhi = ((np.abs(xgb_importances_normalized) / np.sum(xgb_importances_normalized))**2)
                 
@@ -281,7 +289,8 @@ class DiseasePrediction:
                 knn_importances = shap.KernelExplainer(knn_clf.named_steps['knn_clf'].predict, shap.sample(self.X_train, 1000)).shap_values(self.X_test)
             
             if self.use_igenes:
-                knn_importances_extracted = knn_importances[0]
+                # See SVM
+                knn_importances_extracted = np.mean(knn_importances, axis = 0)
                 knn_importances_normalized = knn_importances_extracted / np.max(np.abs(knn_importances_extracted))
                 knn_hhi = ((np.abs(knn_importances_normalized) / np.sum(knn_importances_normalized))**2)
             
@@ -345,7 +354,8 @@ class DiseasePrediction:
                 mlp_importances =  shap.KernelExplainer(mlp_clf.named_steps['mlp_clf'].predict, shap.sample(self.X_train, 1000)).shap_values(self.X_test)
                 
             if self.use_igenes:
-                mlp_importances_extracted = mlp_importances[0]
+                # See SVM
+                mlp_importances_extracted = np.mean(mlp_importances, axis = 0)
                 mlp_importances_normalized = mlp_importances_extracted / np.max(np.abs(mlp_importances_extracted))
                 mlp_hhi = ((np.abs(mlp_importances_normalized) / np.sum(mlp_importances_normalized))**2)
                 
