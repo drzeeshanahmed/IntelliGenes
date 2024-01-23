@@ -497,7 +497,7 @@ class DiseasePrediction:
                 normalized_importances_list = [metrics["Importances"] for _, metrics in self.classifiers if "Importances" in metrics]
                 transposed_importances_list = list(zip(*normalized_importances_list))
                                 
-                igenes_df['Expression Direction'] = [self.expression_directions(*scores) for scores in transposed_importances_list]
+                igenes_df['Expression Direction'] = [self.expression_direction(*scores) for scores in transposed_importances_list]
 
                 igenes_df['I-Genes Rankings'] = igenes_df['I-Genes Score'].rank(ascending=False).astype(int)
                 igenes_df = igenes_df.sort_values(by='I-Genes Rankings')
