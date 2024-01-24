@@ -491,7 +491,7 @@ class DiseasePrediction:
                 
                 igenes_df = pd.DataFrame({
                     'Feature': self.X_train.columns,
-                    'I-Genes Score': igenes_scores,
+                    'I-Genes Score': np.round(igenes_scores, 4),
                 })
 
                 normalized_importances_list = [metrics["Importances"] for _, metrics in self.classifiers if "Importances" in metrics]
