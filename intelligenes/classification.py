@@ -457,7 +457,6 @@ class DiseasePrediction:
     # Generate I-Genes Profile
     def igenes_scores(self: 'DiseasePrediction'):
         if self.use_igenes:
-
             print('Generating I-Genes Scores...')
 
             if self.classifiers:
@@ -490,8 +489,7 @@ class DiseasePrediction:
                 igenes_df = pd.DataFrame({
                     'Feature': self.X_train.columns,
                     'I-Genes Score': np.round(igenes_scores, 4),
-                    'Prediction': case_control_predictions,
-                    
+                    'Prediction': case_control_predictions,  
                 })
                 
                 feature_expression = []
