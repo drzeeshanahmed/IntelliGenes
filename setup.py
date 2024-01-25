@@ -31,7 +31,8 @@ setup(
         'xgboost',
         'shap',
         'matplotlib',
-        'scipy'
+        'scipy',
+        'pyarrow'
     ],
     python_requires = '>=3.6',
     entry_points = {
