@@ -131,7 +131,7 @@ class DiseasePrediction:
             rf_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return rf_clf, rf_accuracy, rf_roc_auc, rf_f1, rf_importances_extracted / np.max(np.abs(rf_importances_extracted)), rf_hhi
+                return rf_clf, rf_accuracy, rf_roc_auc, rf_f1, rf_importances_extracted / np.max(np.abs(rf_importances_extracted)), rf_hhi, rf_importances
             else:
                 return rf_clf, rf_accuracy, rf_roc_auc, rf_f1                  
         
@@ -191,7 +191,7 @@ class DiseasePrediction:
             svm_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return svm_clf, svm_accuracy, svm_roc_auc, svm_f1, svm_importances_extracted / np.max(np.abs(svm_importances_extracted)), svm_hhi
+                return svm_clf, svm_accuracy, svm_roc_auc, svm_f1, svm_importances_extracted / np.max(np.abs(svm_importances_extracted)), svm_hhi, svm_importances
             else: 
                 return svm_clf, svm_accuracy, svm_roc_auc
             
@@ -252,7 +252,7 @@ class DiseasePrediction:
             xgb_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return xgb_clf, xgb_accuracy, xgb_roc_auc, xgb_f1, xgb_importances_extracted / np.max(np.abs(xgb_importances_extracted)), xgb_hhi
+                return xgb_clf, xgb_accuracy, xgb_roc_auc, xgb_f1, xgb_importances_extracted / np.max(np.abs(xgb_importances_extracted)), xgb_hhi, xgb_importances
             else: 
                 return xgb_clf, xgb_accuracy, xgb_roc_auc, xgb_f1
             
@@ -312,7 +312,7 @@ class DiseasePrediction:
             knn_f1 = f1_score(self.y_test, y_pred, average = 'weighted')
             
             if self.use_igenes:
-                return knn_clf, knn_accuracy, knn_roc_auc, knn_f1, knn_importances_extracted / np.max(np.abs(knn_importances_extracted)), knn_hhi
+                return knn_clf, knn_accuracy, knn_roc_auc, knn_f1, knn_importances_extracted / np.max(np.abs(knn_importances_extracted)), knn_hhi, knn_importances
             else: 
                 return knn_clf, knn_accuracy, knn_roc_auc, knn_f1
             
@@ -376,7 +376,7 @@ class DiseasePrediction:
             mlp_f1 = f1_score(self.y_test, y_pred, average = 'weighted')           
             
             if self.use_igenes:
-                return mlp_clf, mlp_accuracy, mlp_roc_auc, mlp_f1, mlp_importances_extracted / np.max(np.abs(mlp_importances_extracted)), mlp_hhi
+                return mlp_clf, mlp_accuracy, mlp_roc_auc, mlp_f1, mlp_importances_extracted / np.max(np.abs(mlp_importances_extracted)), mlp_hhi, mlp_importances
             else:
                 return mlp_clf, mlp_accuracy, mlp_roc_auc, mlp_f1
             
@@ -422,9 +422,13 @@ class DiseasePrediction:
                     "F1": f1
                 }
 
-                if len(rest) >= 2:  
+                if len(rest) == 2:
                     classifier_info["Importances"] = rest[0]
                     classifier_info["HHI"] = rest[1]
+                elif len(rest) == 3:
+                    classifier_info["Importances"] = rest[0]
+                    classifier_info["HHI"] = rest[1]
+                    classifier_info["SHAP Values"] = rest[2]
 
                 self.classifiers.append((name, classifier_info))
                 
@@ -451,33 +455,25 @@ class DiseasePrediction:
             return metrics_df
     
     # Generate I-Genes Profile
-    def expression_direction(self: 'DiseasePrediction', *scores):
-        positive_count = sum(1 for score in scores if score > 0)
-        negative_count = sum(1 for score in scores if score < 0)
-        
-        if positive_count > negative_count:
-            return "Overexpressed"
-        elif negative_count > positive_count:
-            return "Underexpressed"
-        else:
-            return "Inconclusive"
-    
     def igenes_scores(self: 'DiseasePrediction'):
         if self.use_igenes:
+
             print('Generating I-Genes Scores...')
+
             if self.classifiers:
                 normalized_importances = []
                 herfindahl_hirschman_indices = []
+                SHAP_values = []
 
                 for name, metrics in self.classifiers:
-                    if name == "Voting Classifier":
-                        continue
+                    if name != "Voting Classifier":
+                        if "Importances" in metrics:
+                            normalized_importances.append(metrics["Importances"])
+                            herfindahl_hirschman_indices.append(metrics["HHI"])
+                        if "SHAP Values" in metrics:
+                            SHAP_values.append(metrics["SHAP Values"])
 
-                    if "Importances" in metrics:
-                        normalized_importances.append(metrics["Importances"])
-                        herfindahl_hirschman_indices.append(metrics["HHI"])
-
-                if not normalized_importances or not herfindahl_hirschman_indices:
+                if not normalized_importances or not herfindahl_hirschman_indices or not SHAP_values:
                     return
 
                 num_classifiers = len(self.classifiers)
@@ -489,18 +485,40 @@ class DiseasePrediction:
                 for weight, importance in zip(final_weights, normalized_importances):
                     igenes_scores += weight * np.abs(importance)
                 
+                case_control_predictions = ['Cases' if importances > 0 else 'Controls' if importances < 0 else 'Cases' for importances in np.sum(normalized_importances, axis = 0)]
+                
                 igenes_df = pd.DataFrame({
                     'Feature': self.X_train.columns,
                     'I-Genes Score': np.round(igenes_scores, 4),
+                    'Prediction': case_control_predictions,
+                    
                 })
+                
+                feature_expression = []
+                for i, prediction in enumerate(case_control_predictions):
+                    if prediction in ['Cases', 'Controls']:
+                        aggregated_shap = np.sum([shap[:, i] for shap in SHAP_values], axis = 0)
+                    
+                        relevant_shap_samples = aggregated_shap > 0 if prediction == 'Positive' else aggregated_shap < 0
+                        if len(relevant_shap_samples) != len(self.X_test):
+                            raise ValueError("Length of SHAP samples does not match the number of rows in X_train.")
 
-                normalized_importances_list = [metrics["Importances"] for _, metrics in self.classifiers if "Importances" in metrics]
-                transposed_importances_list = list(zip(*normalized_importances_list))
-                                
-                igenes_df['Expression Direction'] = [self.expression_direction(*scores) for scores in transposed_importances_list]
+                        feature_average = self.X_test.iloc[relevant_shap_samples, i].mean()
+                        overall_average = self.X_test.iloc[:, i].mean()
 
-                igenes_df['I-Genes Rankings'] = igenes_df['I-Genes Score'].rank(ascending=False).astype(int)
-                igenes_df = igenes_df.sort_values(by='I-Genes Rankings')
+                        if feature_average > overall_average:
+                            feature_expression.append('Overexpression')
+                        elif feature_average < overall_average:
+                            feature_expression.append('Underexpression')
+                        else:
+                            feature_expression.append('Inconclusive')
+                    else:
+                        feature_expression.append('Not Applicable')
+
+                igenes_df['Expression'] = feature_expression
+
+                igenes_df['I-Genes Rankings'] = igenes_df['I-Genes Score'].rank(ascending = False).astype(int)
+                igenes_df = igenes_df.sort_values(by = 'I-Genes Rankings')
 
                 return igenes_df
     
