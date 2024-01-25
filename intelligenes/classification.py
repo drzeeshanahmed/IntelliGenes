@@ -514,7 +514,6 @@ class DiseasePrediction:
                         feature_expression.append('Not Applicable')
 
                 igenes_df['Expression'] = feature_expression
-
                 igenes_df['I-Genes Rankings'] = igenes_df['I-Genes Score'].rank(ascending = False).astype(int)
                 igenes_df = igenes_df.sort_values(by = 'I-Genes Rankings')
 
