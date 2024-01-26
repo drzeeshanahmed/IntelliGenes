@@ -495,7 +495,8 @@ class DiseasePrediction:
                 feature_expression = []
                 for i, prediction in enumerate(case_control_predictions):
                     if prediction in ['Cases', 'Controls']:
-                        aggregated_shap = np.sum([shap[:, i] for shap in SHAP_values], axis = 0)
+                        SHAP_normalized = [SHAP / np.max(np.abs(SHAP)) for SHAP in SHAP_values]
+                        aggregated_shap = np.sum([SHAP[:, i] for SHAP in SHAP_normalized], axis = 0)
                     
                         relevant_shap_samples = aggregated_shap > 0 if prediction == 'Positive' else aggregated_shap < 0
                         if len(relevant_shap_samples) != len(self.X_test):
