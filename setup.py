@@ -10,7 +10,7 @@ class CustomInstall(install):
 
 setup(
     name = 'intelligenes',
-    version = '1.0',
+    version = '1.1',
     author = 'William DeGroat',
     author_email = 'will.degroat@rutgers.edu',
     description = 'IntelliGenes: AI/ML pipeline for predictive analyses using multi-genomic profiles.',    
