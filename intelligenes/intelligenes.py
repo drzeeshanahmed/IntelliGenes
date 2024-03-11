@@ -1,94 +1,76 @@
-import argparse
-import subprocess
-import pkg_resources
+# Data Manipulation
+import pandas as pd
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--cgit_file', required=True)
-    parser.add_argument('-o', '--output_dir', required=True)
-    
-    parser.add_argument('--random_state', type=int, default=42)
-    parser.add_argument('--test_size', type=float, default=0.3)
-    parser.add_argument('--n_splits', type=int, default=5)
-    
-    parser.add_argument('--normalize', action='store_true')
-    parser.add_argument('--no_rfe', action='store_true')
-    parser.add_argument('--no_pearson', action='store_true')
-    parser.add_argument('--no_chi2', action='store_true')
-    parser.add_argument('--no_anova', action='store_true')
-    
-    parser.add_argument('--voting', type=str, default='soft')
-    parser.add_argument('--no_rf', action='store_true')
-    parser.add_argument('--no_svm', action='store_true')
-    parser.add_argument('--no_xgb', action='store_true')
-    parser.add_argument('--no_knn', action='store_true')
-    parser.add_argument('--no_mlp', action='store_true')
-    parser.add_argument('--tune', action='store_true')
-    parser.add_argument('--no_igenes', action='store_true')
-    parser.add_argument('--no_visualization', action='store_true')
-    
-    args = parser.parse_args()
+# Misc System libraries
+from datetime import datetime
+from pathlib import Path
 
-    selection_path = pkg_resources.resource_filename('intelligenes', 'selection.py')
-    selection_args = [
-        'python', selection_path,
-        '-i', args.cgit_file,
-        '-o', args.output_dir,
-        '--random_state', str(args.random_state),
-        '--test_size', str(args.test_size),
-    ]
-    
-    if args.normalize:
-        selection_args.append('--normalize')
-    if args.no_rfe:
-        selection_args.append('--no_rfe')
-    if args.no_pearson:
-        selection_args.append('--no_pearson')
-    if args.no_chi2:
-        selection_args.append('--no_chi2')
-    if args.no_anova:
-        selection_args.append('--no_anova')
-    
-    selection = subprocess.run(selection_args, capture_output=True, text=True)
-    print(selection.stdout)
-    selection_output = selection.stdout.strip().split('\n')
-    for line in selection_output:
-        if line.startswith(" Selected Features:"):
-            features_file = line.split(":")[1].strip()
-            break
+# Custom utilities
+from utils.stdout import StdOut
 
-    classification_path = pkg_resources.resource_filename('intelligenes', 'classification.py')
-    classification_args = [
-        'python', classification_path,
-        '-i', args.cgit_file,
-        '-f',features_file,
-        '-o', args.output_dir,
-        '--random_state', str(args.random_state),
-        '--test_size', str(args.test_size),
-        '--n_splits', str(args.n_splits),
-        '--voting', args.voting,
-    ]
-    
-    if args.no_rf:
-        classification_args.append('--no_rf')
-    if args.no_svm:
-        classification_args.append('--no_svm')
-    if args.no_xgb:
-        classification_args.append('--no_xgb')
-    if args.no_knn:
-        classification_args.append('--no_knn')
-    if args.no_mlp:
-        classification_args.append('--no_mlp')
-    if args.tune:
-        classification_args.append('--tune')
-    if args.normalize:
-        classification_args.append('--normalize')
-    if args.no_igenes:
-        classification_args.append('--no_igenes')
-    if args.no_visualization:
-        classification_args.append('--no_visualization')
-        
-    subprocess.check_call(classification_args)
+# Intelligenes
+from .selection import select_features
+from .classification import classify_features
 
-if __name__ == '__main__':
-    main()
+
+def main(
+    cgit_file: str,
+    output_dir: str,
+    rand_state: int,
+    test_size: float,
+    use_normalization_selectors: bool,
+    use_normalization_classifiers: bool,
+    use_rfe: bool,
+    use_pearson: bool,
+    use_anova: bool,
+    use_chi2: bool,
+    n_splits: int,
+    voting_type: str,
+    use_tuning: bool,
+    use_igenes: bool,
+    use_visualizations: bool,
+    use_rf: bool,
+    use_svm: bool,
+    use_xgb: bool,
+    use_knn: bool,
+    use_mlp: bool,
+    stdout: StdOut,
+):
+    stdout.write(f"Reading DataFrame from {cgit_file}")
+    input_df = pd.read_csv(cgit_file)
+    significant_features = select_features(
+        input_df=input_df,
+        rand_state=rand_state,
+        test_size=test_size,
+        use_normalization=use_normalization_selectors,
+        use_rfe=use_rfe,
+        use_pearson=use_pearson,
+        use_anova=use_anova,
+        use_chi2=use_chi2,
+        output_dir=output_dir,
+        stem=f"{Path(cgit_file).stem}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}",
+        stdout=stdout,
+    )
+
+    classify_features(
+        input_df=input_df,
+        selected_features=significant_features,
+        rand_state=rand_state,
+        test_size=test_size,
+        use_normalization=use_normalization_classifiers,
+        use_tuning=use_tuning,
+        nsplits=n_splits,
+        use_rf=use_rf,
+        use_svm=use_svm,
+        use_xgb=use_xgb,
+        use_knn=use_knn,
+        use_mlp=use_mlp,
+        voting_type=voting_type,
+        use_visualizations=use_visualizations,
+        use_igenes=use_igenes,
+        output_dir=output_dir,
+        stem=f"{Path(cgit_file).stem}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}",
+        stdout=stdout,
+    )
+
+    stdout.write("Finished Intelligenes Pipeline")

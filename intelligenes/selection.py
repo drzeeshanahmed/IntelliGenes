@@ -1,158 +1,206 @@
-# (Packages/Libraries) Matrix Manipulation
-import pandas as pd 
+# Data Manipulation libraries
+import pandas as pd
+from pandas import DataFrame, Series
 
-# (Packages/Libraries) Statistical Analysis & Machine Learning
+# Machine Learning libraries
+from scipy.stats import pearsonr
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_selection import SelectKBest, chi2, f_classif, RFE
 from sklearn.tree import DecisionTreeClassifier
-from scipy.stats import pearsonr
 
-# (Packages/Libraries) Miscellaneous
-import argparse
-import warnings
-from sklearn.exceptions import ConvergenceWarning
-import os
+# Misc System libraries
 from datetime import datetime
+import os
 from pathlib import Path
 
-class FeatureSelection:
-    
-    def __init__(self: 'FeatureSelection', cgit_file: str, output_dir: str, random_state: 42, test_size: 0.3, use_rfe = True, use_pearson = True, use_chi2 = True, use_anova = True, use_normalization = False): 
-        self.cgit_file = cgit_file
-        self.output_dir = output_dir
-        self.random_state = random_state
-        self.test_size = test_size
-        self.use_rfe = use_rfe
-        self.use_pearson = use_pearson
-        self.use_chi2 = use_chi2
-        self.use_anova = use_anova
-        self.use_normalization = use_normalization
-        
-        self.df = pd.read_csv(self.cgit_file)
-        
-        self.y = self.df['Type']
-        self.X = self.df.drop(['Type', 'ID'], axis = 1)
-        
-        if self.use_normalization:
-            self.X = pd.DataFrame(MinMaxScaler().fit_transform(self.X), columns = self.X.columns)
-        
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size = self.test_size, random_state = self.random_state)
-        
-        self.selectors = []        
+# Utilities libraries
+from utils.stdout import StdOut
 
-    def rfe_selector(self: 'FeatureSelection'):
-        if self.use_rfe:
-            print("Recursive Feature Elimination...") 
-            rfe_selection = RFE(estimator = DecisionTreeClassifier(random_state = self.random_state), n_features_to_select = 1).fit(self.X_train, self.y_train)
-            rfe_df = pd.DataFrame({'attributes': self.X_train.columns,
-                                   'rfe_rankings': rfe_selection.ranking_})
-            
-            rfe_df = rfe_df.sort_values(by = 'rfe_rankings').loc[rfe_df['rfe_rankings'] <= int((self.df.shape[1] - 2) * .10)]
-            return rfe_df 
-        return None
 
-    def pearson_selector(self: 'FeatureSelection'):
-        if self.use_pearson:
-            print("Pearson's Correlation...") 
-            pearson_selection = [pearsonr(self.X_train[column], self.y_train) for column in self.X.columns]
-            pearson_df = pd.DataFrame({'attributes': self.X_train.columns,
-                                       'pearson_p-value': [corr[1] for corr in pearson_selection]})
-        
-            pearson_df = pearson_df[pearson_df['pearson_p-value'] < 0.05]
-            return pearson_df
-        return None
-    
-    def chi2_selector(self: 'FeatureSelection'):
-        if self.use_chi2:
-            print("Chi-Square Test...") 
-            chi2_selection = SelectKBest(score_func = chi2, k = 10).fit(self.X_train, self.y_train)
-            chi2_df = pd.DataFrame({'attributes': self.X_train.columns, 
-                                    'chi2_p-value': chi2_selection.pvalues_})
-            
-            chi2_df = chi2_df[chi2_df['chi2_p-value'] < 0.05]
-            return chi2_df
-        return None
-              
-    def anova_selector(self: 'FeatureSelection'):
-        if self.use_anova:
-            print("ANOVA...")
-            anova_selection = SelectKBest(score_func = f_classif, k = 10).fit(self.X_train, self.y_train)
-            anova_df = pd.DataFrame({'attributes': self.X_train.columns, 
-                                     'anova_p-value': anova_selection.pvalues_})
- 
-            anova_df = anova_df[anova_df['anova_p-value'] < 0.05]
-            return anova_df
-        return None
-    
-    def execute_selectors(self: 'FeatureSelection'):
-        self.selectors = [self.rfe_selector(), 
-                          self.pearson_selector(), 
-                          self.chi2_selector(), 
-                          self.anova_selector()]
-        
-        self.selectors = [df for df in self.selectors if df is not None]
-        
-    def selected_attributes(self: 'FeatureSelection'):
-        selected_attributes = pd.DataFrame({'attributes': self.X_train.columns})
-        for df in self.selectors:
-            selected_attributes = selected_attributes.merge(df, how = 'inner', on = 'attributes')
+def recursive_elim(
+    x: DataFrame, y: Series, rand_state: int, features_col: str, ranking_col: str
+) -> DataFrame:
+    e = DecisionTreeClassifier(random_state=rand_state)
+    rfe = RFE(estimator=e, n_features_to_select=1).fit(x, y)
 
-        selector_cols = ['rfe_rankings', 'pearson_p-value', 'chi2_p-value', 'anova_p-value']
-        selectors_used = [col for col in selector_cols if col in selected_attributes.columns]
-        if any(not self.__dict__[f"use_{selector.split('_')[0]}"] for selector in selectors_used):
-            selected_attributes = selected_attributes.dropna(subset = selectors_used, how = 'any')
-            
-        selected_attributes = selected_attributes.rename(columns={
-            'attributes': 'Features',
-            'rfe_rankings': 'RFE Rankings',
-            'pearson_p-value': "Pearson's Correlation (p-value)",
-            'chi2_p-value': 'Chi-Square Test (p-value)',
-            'anova_p-value': 'ANOVA (p-value)'
-        })
-
-        return selected_attributes
-    
-def main():
-    print("\n")
-    print("IntelliGenes Feature Selection/Biomarker Location...")
-    
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--cgit_file', required = True)
-    parser.add_argument('-o', '--output_dir', required = True)
-    parser.add_argument('--random_state', type = int, default = 42)
-    parser.add_argument('--test_size', type = float, default = 0.3)
-    parser.add_argument('--no_rfe', action = 'store_true')
-    parser.add_argument('--no_pearson', action = 'store_true')
-    parser.add_argument('--no_chi2', action = 'store_true')
-    parser.add_argument('--no_anova', action = 'store_true')
-    parser.add_argument('--normalize', action = 'store_true')
-    args = parser.parse_args()
-
-    pipeline = FeatureSelection(
-        cgit_file  = args.cgit_file, 
-        output_dir = args.output_dir, 
-        random_state = args.random_state, 
-        test_size = args.test_size, 
-        use_rfe = not args.no_rfe, 
-        use_pearson = not args.no_pearson, 
-        use_chi2 = not args.no_chi2, 
-        use_anova = not args.no_anova, 
-        use_normalization = args.normalize
+    df = pd.DataFrame(
+        {
+            "features": x.columns,
+            "rank": rfe.ranking_,
+        },
     )
-    
-    pipeline.execute_selectors()
-    features_df = pipeline.selected_attributes()
-    
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    # Since we only select 1 feature above, only that feature will have rank '1'
+    # Every other feature will have a sequential rank. So here, we select the top 10% of features
+    # This is done so we have an explicit order of the features.
+    return df.rename(columns={"features": features_col, "rank": ranking_col})
 
-    file_name = Path(args.cgit_file).stem
-    features_name = f"{file_name}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}_Selected-Features.csv"
-    features_file = os.path.join(args.output_dir, features_name)
-    
-    features_df.to_csv(features_file, index = False)
-    print("\n Selected Features:", features_file, "\n")
 
-if __name__ == '__main__':
-    main()
+def pearson(x: DataFrame, y: Series, features_col: str, p_value_col: str) -> DataFrame:
+    df = pd.DataFrame(
+        {
+            "features": x.columns,
+            # Independently calculate p-value for each predictor vs y
+            # the second element of the return is the p-value
+            "p-value": [pearsonr(x[col], y)[1] for col in x.columns],
+        }
+    )
+
+    return df.rename(columns={"features": features_col, "p-value": p_value_col})
+
+
+def chi2_test(
+    x: DataFrame, y: Series, features_col: str, p_value_col: str
+) -> DataFrame:
+    chi = SelectKBest(score_func=chi2, k="all").fit(x, y)
+    df = pd.DataFrame(
+        {
+            "features": x.columns,
+            "p-value": chi.pvalues_,
+        }
+    )
+
+    return df.rename(columns={"features": features_col, "p-value": p_value_col})
+
+
+def anova(x: DataFrame, y: Series, features_col: str, p_value_col: str) -> DataFrame:
+    anova = SelectKBest(score_func=f_classif, k="all").fit(x, y)
+    df = pd.DataFrame(
+        {
+            "features": x.columns,
+            "p-value": anova.pvalues_,
+        }
+    )
+
+    return df.rename(columns={"features": features_col, "p-value": p_value_col})
+
+
+def min_max_scalar(x: DataFrame) -> DataFrame:
+    return pd.DataFrame(MinMaxScaler().fit_transform(x), columns=x.columns)
+
+
+### Calculates the most relevant features from `input` needed to calculate
+## Needs a Type and ID column, and returns the same DataFrame with only selected
+## features present
+def select_features(
+    input_df: DataFrame,
+    stdout: StdOut,
+    test_size: int,
+    rand_state: int,
+    use_normalization: bool,
+    use_rfe: bool,
+    use_anova: bool,
+    use_chi2: bool,
+    use_pearson: bool,
+    output_dir: str,
+    stem: str,
+) -> DataFrame:
+    id_column = "ID"
+    y_label_col = "Type"
+
+    for c in [id_column, y_label_col]:
+        if c not in input_df.columns:
+            stdout.write(f"Invalid format: Missing column '{c}' in CIGT file.")
+            return
+
+    parsed_input_df = input_df.drop(columns=[id_column])
+    X = parsed_input_df.drop(columns=[y_label_col])
+    Y = parsed_input_df[y_label_col]
+
+    stdout.write("Selecting Important Features")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    x, _, y, _ = train_test_split(X, Y, test_size=test_size, random_state=rand_state)
+
+    features_col = "Features"
+    rfe_col = "RFE Rankings"
+    anova_col = "ANOVA (p-value)"
+    chi2_col = "Chi-Square Test (p-value)"
+    pearson_col = "Pearson's Correlation (p-value)"
+
+    if use_normalization:
+        stdout.write("Normalizing DataFrame")
+        x = min_max_scalar(x)
+
+    results: tuple[list[DataFrame], list[Series]] = []
+
+    if use_rfe:
+        stdout.write("Recursive Feature Elimination")
+        result = recursive_elim(x, y, rand_state, features_col, rfe_col)
+        results.append((result, result[rfe_col] <= int(len(x.columns) * 0.1)))
+    if use_anova:
+        stdout.write("Analysis of Variance")
+        result = anova(x, y, features_col, anova_col)
+        results.append((result, result[anova_col] < 0.05))
+    if use_chi2:
+        stdout.write("Chi-Squared Test")
+        result = chi2_test(x, y, features_col, chi2_col)
+        results.append((result, result[chi2_col] < 0.05))
+    if use_pearson:
+        stdout.write("Pearson Correlation")
+        result = pearson(x, y, features_col, pearson_col)
+        results.append((result, result[pearson_col] < 0.05))
+
+    if len(results) == 0:
+        stdout.write("No selectors were used. Exiting...")
+        return
+
+    all = None
+    selected_mask = None
+    for result, mask in results:
+        all = result if all is None else all.merge(result, on=features_col)
+        selected_mask = mask if selected_mask is None else selected_mask & mask
+
+    selected: DataFrame = all.loc[selected_mask]
+
+    all_path = os.path.join(output_dir, f"{stem}_All-Features.csv")
+    selected_path = os.path.join(output_dir, f"{stem}_Selected-Features.csv")
+
+    all.to_csv(all_path, index=False)
+    selected.to_csv(selected_path, index=False)
+    stdout.write(f"Saved all feature rankings to {all_path}")
+    stdout.write(f"Saved selected feature rankings to {selected_path}")
+
+    selected_cigt_path = os.path.join(output_dir, f"{stem}_Selected-CIGT-File.csv")
+    selected_columns = [id_column, y_label_col]
+    significant_features = selected[features_col].tolist()
+    selected_columns.extend(significant_features)
+
+    selected_df = input_df[selected_columns]
+    selected_df.to_csv(selected_cigt_path, index=False)
+    stdout.write(f"Saved the selected features CIGT file to {selected_path}")
+
+    stdout.write("Finished Feature Selection")
+
+    return significant_features
+
+
+def main(
+    stdout: StdOut,
+    cgit_file: str,
+    output_dir: str,
+    rand_state: int,
+    test_size: float,
+    use_normalization: bool,
+    use_rfe: bool,
+    use_pearson: bool,
+    use_anova: bool,
+    use_chi2: bool,
+):
+    stdout.write(f"Reading DataFrame from {cgit_file}")
+    input_df = pd.read_csv(cgit_file)
+
+    select_features(
+        input_df=input_df,
+        stdout=stdout,
+        rand_state=rand_state,
+        test_size=test_size,
+        use_normalization=use_normalization,
+        use_rfe=use_rfe,
+        use_pearson=use_pearson,
+        use_anova=use_anova,
+        use_chi2=use_chi2,
+        output_dir=output_dir,
+        stem=f"{Path(cgit_file).stem}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}",
+    )
