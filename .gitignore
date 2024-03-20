@@ -1,0 +1,7 @@
+__pycache__
+venv/
+archive/
+build/
+dist/
+NOTES.md
+.DS_Store
