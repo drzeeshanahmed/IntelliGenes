@@ -24,7 +24,6 @@ class MainWindow(QMainWindow):
     filesPageSignal = Signal()
     demoPageSignal = Signal()
 
-
     def __init__(self):
         super().__init__()
         self.setWindowTitle("IntelliGenes")
@@ -37,9 +36,10 @@ class MainWindow(QMainWindow):
             ("Visualization", OutputFilesPage(self.inputFile, self.outputDir, self.filesPageSignal)),
             ("Help", HelpPage(self.inputFile, self.outputDir, self.demoPageSignal)),
         ]
+
         def select_tab(index: int):
             tabs[index][1].onTabSelected.emit()
-        
+
         self.inputFile.emit("")
         self.outputDir.emit("")
 
@@ -50,7 +50,6 @@ class MainWindow(QMainWindow):
 
         for name, widget in tabs:
             tab_bar.addTab(widget, name)
-        tab_bar.setCurrentIndex(0)
 
         tab_bar.setLayout(layout)
 

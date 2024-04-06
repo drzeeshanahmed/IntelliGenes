@@ -18,9 +18,7 @@ from pathlib import Path
 from utils.stdout import StdOut
 
 
-def recursive_elim(
-    x: DataFrame, y: Series, rand_state: int, features_col: str, ranking_col: str
-) -> DataFrame:
+def recursive_elim(x: DataFrame, y: Series, rand_state: int, features_col: str, ranking_col: str) -> DataFrame:
     e = DecisionTreeClassifier(random_state=rand_state)
     rfe = RFE(estimator=e, n_features_to_select=1).fit(x, y)
 
@@ -49,9 +47,7 @@ def pearson(x: DataFrame, y: Series, features_col: str, p_value_col: str) -> Dat
     return df.rename(columns={"features": features_col, "p-value": p_value_col})
 
 
-def chi2_test(
-    x: DataFrame, y: Series, features_col: str, p_value_col: str
-) -> DataFrame:
+def chi2_test(x: DataFrame, y: Series, features_col: str, p_value_col: str) -> DataFrame:
     chi = SelectKBest(score_func=chi2, k="all").fit(x, y)
     df = pd.DataFrame(
         {
@@ -79,9 +75,6 @@ def min_max_scalar(x: DataFrame) -> DataFrame:
     return pd.DataFrame(MinMaxScaler().fit_transform(x), columns=x.columns)
 
 
-### Calculates the most relevant features from `input` needed to calculate
-## Needs a Type and ID column, and returns the same DataFrame with only selected
-## features present
 def select_features(
     input_df: DataFrame,
     stdout: StdOut,
@@ -93,8 +86,12 @@ def select_features(
     use_chi2: bool,
     use_pearson: bool,
     output_dir: str,
+    rfe_top_percentile: float,
+    pearson_alpha: float,
+    anova_alpha: float,
+    chi2_alpha: float,
     stem: str,
-) -> DataFrame:
+) -> list[str]:
     id_column = "ID"
     y_label_col = "Type"
 
@@ -126,25 +123,25 @@ def select_features(
     results: tuple[list[DataFrame], list[Series]] = []
 
     if use_rfe:
-        stdout.write("Recursive Feature Elimination")
+        stdout.write(f"Recursive Feature Elimination with top percentile {rfe_top_percentile}")
         result = recursive_elim(x, y, rand_state, features_col, rfe_col)
-        results.append((result, result[rfe_col] <= int(len(x.columns) * 0.1)))
+        results.append((result, result[rfe_col] <= int(len(x.columns) * rfe_top_percentile)))
     if use_anova:
-        stdout.write("Analysis of Variance")
+        stdout.write(f"Analysis of Variance with significance threshold {anova_alpha}")
         result = anova(x, y, features_col, anova_col)
-        results.append((result, result[anova_col] < 0.05))
+        results.append((result, result[anova_col] < anova_alpha))
     if use_chi2:
-        stdout.write("Chi-Squared Test")
+        stdout.write(f"Chi-Squared Test with significance threshold {chi2_alpha}")
         result = chi2_test(x, y, features_col, chi2_col)
-        results.append((result, result[chi2_col] < 0.05))
+        results.append((result, result[chi2_col] < chi2_alpha))
     if use_pearson:
-        stdout.write("Pearson Correlation")
+        stdout.write(f"Pearson Correlation with significance threshold {pearson_alpha}")
         result = pearson(x, y, features_col, pearson_col)
-        results.append((result, result[pearson_col] < 0.05))
+        results.append((result, result[pearson_col] < pearson_alpha))
 
     if len(results) == 0:
         stdout.write("No selectors were used. Exiting...")
-        return
+        return []  # return no significant features
 
     all = None
     selected_mask = None
@@ -187,6 +184,10 @@ def main(
     use_pearson: bool,
     use_anova: bool,
     use_chi2: bool,
+    rfe_top_percentile: float,
+    pearson_alpha: float,
+    anova_alpha: float,
+    chi2_alpha: float,
 ):
     stdout.write(f"Reading DataFrame from {cgit_file}")
     input_df = pd.read_csv(cgit_file)
@@ -202,5 +203,9 @@ def main(
         use_anova=use_anova,
         use_chi2=use_chi2,
         output_dir=output_dir,
+        rfe_top_percentile=rfe_top_percentile,
+        pearson_alpha=pearson_alpha,
+        anova_alpha=anova_alpha,
+        chi2_alpha=chi2_alpha,
         stem=f"{Path(cgit_file).stem}_{datetime.now().strftime('%m-%d-%Y-%I-%M-%S-%p')}",
     )

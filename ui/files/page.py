@@ -3,6 +3,7 @@ import os
 from PySide6.QtCore import QDir, Signal, Qt, SignalInstance
 from PySide6.QtWidgets import (
     QVBoxLayout,
+    QHBoxLayout,
     QListWidget,
     QListWidgetItem,
     QLabel,
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
 from ui.components.page import Page
 from ui.components.png_renderer import ImageRenderer
 from ui.components.table_editor import TableEditor
+from ui.files.filters import FiltersWidget
 
 
 class OutputFilesPage(Page):
@@ -37,16 +39,17 @@ class OutputFilesPage(Page):
         self._layout.addWidget(path_label)
 
         self.list = QListWidget()
-        self._layout.addWidget(self.list, 1) # stretch factor
+        listLayout = QHBoxLayout()
+        self.filterWidget = FiltersWidget(self.updateDirectoryWidgets)
+        self.outputDirSignal.connect(lambda _: self.filterWidget.selectAll())
+        self._layout.addLayout(listLayout, 1)
+        listLayout.addWidget(self.list)
+        listLayout.addWidget(self.filterWidget)
 
-        self.list.itemClicked.connect(
-            lambda i: self.selectedFile.emit(i.data(Qt.ItemDataRole.UserRole))
-        )
+        self.list.itemClicked.connect(lambda i: self.selectedFile.emit(i.data(Qt.ItemDataRole.UserRole)))
 
         self.outputDirSignal.connect(self.setOutputPath)
-        self.outputDirSignal.connect(
-            lambda text: path_label.setText(text if text else "Select an Output Location")
-        )
+        self.outputDirSignal.connect(lambda text: path_label.setText(text if text else "Select an Output Location"))
         self.onTabSelected.connect(self.updateDirectoryWidgets)
         self.selectedFile.connect(self.handleSelectedFile)
 
@@ -71,9 +74,10 @@ class OutputFilesPage(Page):
         files = dir.entryInfoList()
 
         for file in files:
-            widget = QListWidgetItem(file.fileName())
-            widget.setData(Qt.ItemDataRole.UserRole, file.absoluteFilePath())
-            self.list.addItem(widget)
+            if self.filterWidget.matches(file.fileName()):
+                widget = QListWidgetItem(file.fileName())
+                widget.setData(Qt.ItemDataRole.UserRole, file.absoluteFilePath())
+                self.list.addItem(widget)
 
     def handleSelectedFile(self, path: str):
         if self.rendered_widget is not None:
@@ -93,4 +97,3 @@ class OutputFilesPage(Page):
             else:
                 self.rendered_widget = QLabel("Unsupported file type")
             self._layout.addWidget(self.rendered_widget, 2)  # add with stretch factor
-

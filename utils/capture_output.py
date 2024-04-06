@@ -48,24 +48,21 @@ class Worker:
 
 
 class CaptureOutput(QThread):
-    text = Signal(str)
+    new_line = Signal(str)
 
     def __init__(self, stdout: StdOut):
         super().__init__()
         self._stdout = stdout
         # NOTE: very important to close the file descriptors to avoid memory leaks
         self._job = Worker(stdout, stdout.close)
-        self._text = ""
 
     def load_job(self, job):
         self._job.load_job(job)
 
     def run(self):
         self._job.start()
-        self._text = ""
 
         while self._job.is_alive() or self._stdout.can_read():
             line = self._stdout.read()
             if line is not None:
-                self._text += line
-                self.text.emit(self._text)
+                self.new_line.emit(line)

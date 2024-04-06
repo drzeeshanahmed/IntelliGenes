@@ -150,7 +150,7 @@ class TableEditor(QWidget):
                     self.df.iloc[item.row(), item.column()] = float(text)
             except Exception:
                 continue
-        
+
         self.cell_content.clear()
         self.updateTable()
 

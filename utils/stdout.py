@@ -13,7 +13,7 @@ class StdOut:
 
     def write(self, string: str):
         try:
-            self._ostream.write(string + "\n")
+            self._ostream.write(string + "\n")  # print new line so that readline below works
         except Exception:
             pass
 

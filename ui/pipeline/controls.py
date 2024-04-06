@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 # Pipeline types
 from intelligenes.intelligenes_pipelines import PipelineResult
 
+
 class PipelineControls(QWidget):
     def __init__(
         self,

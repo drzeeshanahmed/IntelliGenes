@@ -118,9 +118,7 @@ class IntSetting(Setting):
 
 
 class FloatSetting(Setting):
-    def __init__(
-        self, name: str, default_value: float, min: float, max: float, step: int
-    ):
+    def __init__(self, name: str, default_value: float, min: float, max: float, step: int):
         super().__init__(name, default_value)
         self.min = min
         self.max = max
@@ -207,9 +205,7 @@ class TextFileSetting(Setting):
         path_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         pb = QPushButton("Reset" if self.value else "Select File")
-        label = QLabel(
-            os.path.basename(self.value) if self.value else "(No file selected)"
-        )
+        label = QLabel(os.path.basename(self.value) if self.value else "(No file selected)")
         pb.clicked.connect(lambda: self.chooseFile(pb, label))
 
         button_layout.addWidget(QLabel(self.name))

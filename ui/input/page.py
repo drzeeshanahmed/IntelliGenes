@@ -32,9 +32,7 @@ class InputPage(Page):
         self.setLayout(layout)
 
         self.restart_button = QPushButton("Reset IntelliGenes")
-        self.restart_button.clicked.connect(
-            lambda: (self.inputFileSignal.emit(""), self.outputDirSignal.emit(""))
-        )
+        self.restart_button.clicked.connect(lambda: (self.inputFileSignal.emit(""), self.outputDirSignal.emit("")))
 
         input_layout = QHBoxLayout()
         self.content_layout = QVBoxLayout()
@@ -45,19 +43,13 @@ class InputPage(Page):
         input_layout.addWidget(input_btn)
         input_layout.addWidget(input_label)
         self.inputFileSignal.connect(self.handleSelectedFile)
-        self.inputFileSignal.connect(
-            lambda text: input_label.setText("No file selected" if not text else text)
-        )
+        self.inputFileSignal.connect(lambda text: input_label.setText("No file selected" if not text else text))
         output_btn = QPushButton("Select Output Location")
         output_label = QLabel()
         output_layout.addWidget(output_btn)
         output_layout.addWidget(output_label)
         self.outputDirSignal.connect(self.handleSelectedDir)
-        self.outputDirSignal.connect(
-            lambda text: output_label.setText(
-                "No directory selected" if not text else text
-            )
-        )
+        self.outputDirSignal.connect(lambda text: output_label.setText("No directory selected" if not text else text))
 
         output_btn.clicked.connect(self.selectDirectory)
         input_btn.clicked.connect(self.selectFile)
@@ -78,7 +70,8 @@ class InputPage(Page):
 
         if filename:
             self.inputFileSignal.emit(filename)
-            self.outputDirSignal.emit(os.path.dirname(filename))
+            if not self.dir:
+                self.outputDirSignal.emit(os.path.dirname(filename))
 
     def selectDirectory(self):
         dir = QFileDialog.getExistingDirectory()
@@ -95,9 +88,7 @@ class InputPage(Page):
         if not path:
             rendered_widget = QLabel("(Select an input file to preview)")
         elif path.endswith("csv"):
-            rendered_widget = TableEditor(
-                path, lambda filename: self.inputFileSignal.emit(filename)
-            )
+            rendered_widget = TableEditor(path, lambda filename: self.inputFileSignal.emit(filename))
         else:
             rendered_widget = QLabel("Unsupported file type")
 
@@ -108,7 +99,7 @@ class InputPage(Page):
             self.content_layout.addWidget(rendered_widget)
         self.rendered_widget = rendered_widget
         self.handleRestartButtonVisibility()
-    
+
     def handleRestartButtonVisibility(self):
         if self.dir or self.file:
             self.restart_button.setVisible(True)

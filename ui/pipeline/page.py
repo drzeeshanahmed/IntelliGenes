@@ -41,12 +41,8 @@ class PipelinePage(Page):
             classification_pipeline(),
         ]
 
-        self.inputFileSignal.connect(
-            lambda text: (self._setFile(text), self.reset(pipelines))
-        )
-        self.outputDirSignal.connect(
-            lambda text: (self._setDir(text), self.reset(pipelines))
-        )
+        self.inputFileSignal.connect(lambda text: (self._setFile(text), self.reset(pipelines)))
+        self.outputDirSignal.connect(lambda text: (self._setDir(text), self.reset(pipelines)))
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -57,21 +53,20 @@ class PipelinePage(Page):
         for name, _, _ in pipelines:
             self.combo_box.addItem(name)
 
-        console = PipelineConsole()
+        self.console = PipelineConsole()
 
-        self.output.text.connect(console.setText)
+        self.output.new_line.connect(self.console.addLine)
+        self.output.started.connect(lambda: self.console.clear())
         self.output.started.connect(lambda: run_button.setDisabled(True))
         self.output.finished.connect(lambda: run_button.setDisabled(False))
 
-        run_button.clicked.connect(
-            lambda: self.run(pipelines[self.combo_box.currentIndex()])
-        )
+        run_button.clicked.connect(lambda: self.run(pipelines[self.combo_box.currentIndex()]))
 
         self.controls = PipelineControls(pipelines, run_button, self.combo_box)
 
         layout.addWidget(self.controls)
         layout.setStretch(0, 1)
-        layout.addWidget(console)
+        layout.addWidget(self.console)
         layout.setStretch(1, 2)
 
     def run_pipeline(self, pipeline: PipelineResult):
@@ -96,8 +91,8 @@ class PipelinePage(Page):
         self.outputDirPath = text
 
     def reset(self, pipelines: list[PipelineResult]):
-        self.output.text.emit("")
         for _, config, _ in pipelines:
             config.reset_settings()
         self.combo_box.setCurrentIndex(0)
         self.controls.setIndex(0)
+        self.console.clear()

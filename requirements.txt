@@ -23,6 +23,7 @@ python-dateutil==2.8.2
 pytz==2024.1
 scikit-learn==1.4.0
 scipy==1.12.0
+seaborn==0.13.2
 shap==0.44.1
 shiboken6==6.6.1
 six==1.16.0

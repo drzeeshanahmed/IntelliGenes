@@ -35,9 +35,13 @@ def feature_selection_pipeline() -> PipelineResult:
                 "Selectors",
                 [
                     BoolSetting("Recursive Feature Elimination", True),
+                    FloatSetting("RFE Top Percentile", 0.1, min=0, max=1, step=0.01),
                     BoolSetting("Pearson's Correlation", True),
+                    FloatSetting("Pearson Alpha Threshold", 0.05, min=0, max=1, step=0.01),
                     BoolSetting("Analysis of Variance", True),
+                    FloatSetting("ANOVA Alpha Threshold", 0.05, min=0, max=1, step=0.01),
                     BoolSetting("Chi-Squared Test", True),
+                    FloatSetting("Chi-Squared Alpha Threshold", 0.05, min=0, max=1, step=0.01),
                 ],
             ),
         ]
@@ -59,6 +63,10 @@ def feature_selection_pipeline() -> PipelineResult:
             use_pearson=config.get("Pearson's Correlation"),
             use_anova=config.get("Analysis of Variance"),
             use_chi2=config.get("Chi-Squared Test"),
+            rfe_top_percentile=config.get("RFE Top Percentile"),
+            anova_alpha=config.get("ANOVA Alpha Threshold"),
+            chi2_alpha=config.get("Chi-Squared Alpha Threshold"),
+            pearson_alpha=config.get("Pearson Alpha Threshold"),
         )
 
     return ("Feature Selection", config, run)
@@ -75,7 +83,6 @@ def classification_pipeline() -> PipelineResult:
                     IntSetting("N Splits", 5, min=1, max=20, step=1),
                     BoolSetting("Normalize", False),
                     BoolSetting("Tune", False),
-                    StrChoiceSetting("Voting", "soft", ["soft", "hard"]),
                     BoolSetting("Calculate I-Genes", True),
                     BoolSetting("Create Visualizations", True),
                     TextFileSetting("Selected Features", ""),
@@ -89,6 +96,7 @@ def classification_pipeline() -> PipelineResult:
                     BoolSetting("XGBoost", True),
                     BoolSetting("K-Nearest Neighbors", True),
                     BoolSetting("Multi-Layer Perceptron", True),
+                    StrChoiceSetting("Voting", "soft", ["soft", "hard"]),
                 ],
             ),
         ]
@@ -134,7 +142,6 @@ def select_and_classify_pipeline() -> PipelineResult:
                     BoolSetting("Normalize for Classifiers", False),
                     IntSetting("N Splits", 5, min=1, max=20, step=1),
                     BoolSetting("Tune", False),
-                    StrChoiceSetting("Voting", "soft", ["soft", "hard"]),
                     BoolSetting("Calculate I-Genes", True),
                     BoolSetting("Create Visualizations", True),
                 ],
@@ -143,9 +150,13 @@ def select_and_classify_pipeline() -> PipelineResult:
                 "Selectors",
                 [
                     BoolSetting("Recursive Feature Elimination", True),
+                    FloatSetting("RFE Top Percentile", 0.1, min=0, max=1, step=0.01),
                     BoolSetting("Pearson's Correlation", True),
+                    FloatSetting("Pearson Alpha Threshold", 0.05, min=0, max=1, step=0.01),
                     BoolSetting("Analysis of Variance", True),
+                    FloatSetting("ANOVA Alpha Threshold", 0.05, min=0, max=1, step=0.01),
                     BoolSetting("Chi-Squared Test", True),
+                    FloatSetting("Chi-Squared Alpha Threshold", 0.05, min=0, max=1, step=0.01),
                 ],
             ),
             Group(
@@ -156,6 +167,7 @@ def select_and_classify_pipeline() -> PipelineResult:
                     BoolSetting("XGBoost", True),
                     BoolSetting("K-Nearest Neighbors", True),
                     BoolSetting("Multi-Layer Perceptron", True),
+                    StrChoiceSetting("Voting", "soft", ["soft", "hard"]),
                 ],
             ),
         ]
@@ -178,6 +190,10 @@ def select_and_classify_pipeline() -> PipelineResult:
             use_pearson=config.get("Pearson's Correlation"),
             use_anova=config.get("Analysis of Variance"),
             use_chi2=config.get("Chi-Squared Test"),
+            rfe_top_percentile=config.get("RFE Top Percentile"),
+            anova_alpha=config.get("ANOVA Alpha Threshold"),
+            chi2_alpha=config.get("Chi-Squared Alpha Threshold"),
+            pearson_alpha=config.get("Pearson Alpha Threshold"),
             n_splits=config.get("N Splits"),
             use_tuning=config.get("Tune"),
             voting_type=config.get("Voting"),
