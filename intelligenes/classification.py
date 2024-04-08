@@ -490,19 +490,21 @@ def classify_features(
         # may print invalid values if the value is 0 (since 0 is undefined on a log scale). can ignore
         fig = sns.catplot(data=melted_df, hue=y_label_col, y="Feature", x="Value", kind="box", aspect=2, log_scale=True)
         fig.figure.set_size_inches(7, 2 + num_selected_features * 0.5)
+        fig.legend.set_loc(loc='upper right')
         set_fig_labels(fig.figure, title="Feature Distribution")
         save_fig(fig.figure, os.path.join(output_dir, f"{stem}_Feature-Value-Distribution-Box.png"))
 
         stdout.write("Strip plot for feature distributions")
         fig = sns.catplot(data=melted_df, hue=y_label_col, y="Feature", x="Value", kind="strip", aspect=2, log_scale=True)
         fig.figure.set_size_inches(7, 2 + num_selected_features * 0.5)
+        fig.legend.set_loc(loc='upper right')
         set_fig_labels(fig.figure, title="Feature Distribution")
         save_fig(fig.figure, os.path.join(output_dir, f"{stem}_Feature-Value-Distribution-Strip.png"))
 
         stdout.write("Pairwise intra/inter feature correlation plot")
         pairwise_df = X.join(Y)
         fig = sns.PairGrid(data=pairwise_df, hue=y_label_col)
-        fig.figure.set_size_inches(num_selected_features * 2, 2 + num_selected_features * 2)
+        fig.figure.set_size_inches(2 + num_selected_features * 2, 2 + num_selected_features * 2)
         fig.map_offdiag(sns.scatterplot)
         fig.map_diag(sns.kdeplot, fill=True)
         # needed to push title to top
@@ -511,7 +513,7 @@ def classify_features(
 
         stdout.write("Intra/inter feature correlations heatmap")
         fig = sns.heatmap(correlation_df, cmap="Blues", annot=True, fmt=".2f")
-        fig.figure.set_size_inches(num_selected_features * 0.8, num_selected_features * 0.8)
+        fig.figure.set_size_inches(2 + num_selected_features * 0.8, 2 + num_selected_features * 0.8)
         set_fig_labels(fig.figure, title="Feature Correlations")
         save_fig(fig.figure, os.path.join(output_dir, f"{stem}_Feature-Correlation-Heatmap.png"))
 
