@@ -49,7 +49,6 @@ setup(
         'scipy==1.12.0',
         'seaborn==0.13.2',
         'shap==0.44.1',
-        'shiboken6==6.6.1',
         'six==1.16.0',
         'slicer==0.0.7',
         'threadpoolctl==3.2.0',
